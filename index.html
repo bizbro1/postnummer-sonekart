@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Postnummer Verktøy</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div id="loading-overlay">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p id="loading-text">Laster postnummerområder...</p>
+    </div>
+  </div>
+
+  <div id="app">
+    <div id="map">
+      <div id="draw-toolbar">
+        <button class="draw-btn" data-tool="circle" title="Tegn sirkel">&#9711;</button>
+        <button class="draw-btn" data-tool="rect" title="Tegn rektangel">&#9645;</button>
+        <button class="draw-btn" data-tool="lasso" title="Frihåndslasso">&#9998;</button>
+        <button class="draw-btn draw-cancel hidden" id="draw-cancel" title="Avbryt">&#10005;</button>
+      </div>
+    </div>
+
+    <div id="panel">
+      <div id="nav-tabs">
+        <button class="nav-tab active" data-tab="soner">Sonekart</button>
+        <button class="nav-tab" data-tab="ruter">Ruter</button>
+      </div>
+
+      <!-- ═══════════ SONER TAB ═══════════ -->
+      <div id="tab-soner" class="tab-content active">
+        <div id="status-bar-soner" class="status-bar">
+          <span id="status-total-soner">Totalt valgt: 0</span>
+          <div id="status-per-soner"></div>
+        </div>
+
+        <div class="panel-section">
+          <label for="zone-select">Aktiv sone:</label>
+          <div class="zone-select-row">
+            <select id="zone-select"></select>
+            <button id="btn-add-zone" title="Legg til ny sone">+</button>
+            <button id="btn-remove-zone" title="Fjern aktiv sone">&minus;</button>
+          </div>
+          <div class="zone-color-indicator">
+            Farge: <span id="zone-color-swatch"></span>
+          </div>
+        </div>
+
+        <div class="panel-section radius-section">
+          <h3>Radius-soneinndeling</h3>
+          <div class="radius-row">
+            <label for="radius-center">Sentrum postnr:</label>
+            <input type="text" id="radius-center" placeholder="f.eks. 1414" />
+          </div>
+          <div class="radius-row">
+            <label for="radius-step">Km per sone:</label>
+            <input type="number" id="radius-step" value="10" min="1" max="500" />
+          </div>
+          <div class="radius-row">
+            <label for="radius-max">Antall soner:</label>
+            <input type="number" id="radius-max" value="5" min="1" max="20" />
+          </div>
+          <div class="radius-row">
+            <label for="radius-rest-toggle">
+              <input type="checkbox" id="radius-rest-toggle" checked />
+              Samle resten i siste sone
+            </label>
+          </div>
+          <button id="btn-radius-apply">Generer soner fra radius</button>
+          <div id="radius-preview"></div>
+        </div>
+
+        <div class="panel-section">
+          <label for="search-input-soner">Søk postnummer / poststed:</label>
+          <input type="text" id="search-input-soner" class="search-input" placeholder="f.eks. 2000 eller Oslo" />
+          <div id="search-results-soner" class="search-results"></div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Soner</h3>
+          <div id="zone-lists"></div>
+        </div>
+
+        <div class="panel-section panel-actions">
+          <button id="btn-clear-soner">Tøm aktive valg</button>
+          <button id="btn-export-json-soner">Eksporter JSON</button>
+          <button id="btn-export-csv-soner">Eksporter CSV</button>
+          <label class="file-import-label" for="file-import-soner">Importer JSON</label>
+          <input type="file" id="file-import-soner" accept=".json" />
+        </div>
+      </div>
+
+      <!-- ═══════════ RUTER TAB ═══════════ -->
+      <div id="tab-ruter" class="tab-content">
+        <div id="status-bar-ruter" class="status-bar">
+          <span id="status-total-ruter">Totalt valgt: 0</span>
+          <div id="status-per-ruter"></div>
+        </div>
+
+        <div class="panel-section">
+          <label for="route-select">Aktiv rute:</label>
+          <div class="zone-select-row">
+            <select id="route-select"></select>
+            <button id="btn-add-route" title="Legg til ny rute">+</button>
+            <button id="btn-remove-route" title="Fjern aktiv rute">&minus;</button>
+          </div>
+          <div class="zone-color-indicator">
+            Farge: <span id="route-color-swatch"></span>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label for="route-name-input">Gi ruten et navn:</label>
+          <div class="zone-select-row">
+            <input type="text" id="route-name-input" placeholder="f.eks. Sentrum Nord" />
+            <button id="btn-rename-route" title="Endre navn">Endre</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <label for="search-input-ruter">Søk postnummer / poststed:</label>
+          <input type="text" id="search-input-ruter" class="search-input" placeholder="f.eks. 2000 eller Oslo" />
+          <div id="search-results-ruter" class="search-results"></div>
+        </div>
+
+        <div class="panel-section">
+          <h3>Ruter</h3>
+          <div id="route-lists"></div>
+        </div>
+
+        <div class="panel-section panel-actions">
+          <button id="btn-clear-ruter">Tøm aktive valg</button>
+          <button id="btn-export-json-ruter">Eksporter JSON</button>
+          <button id="btn-export-csv-ruter">Eksporter CSV</button>
+          <label class="file-import-label" for="file-import-ruter">Importer JSON</label>
+          <input type="file" id="file-import-ruter" accept=".json" />
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.2/proj4.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
