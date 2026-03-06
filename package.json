@@ -1,0 +1,20 @@
+{
+  "name": "postnummer-sonekart",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Interaktivt kartverktøy for å gruppere norske postnummerområder i soner og ruter.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "prepare-data": "node scripts/prepare-data.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bizbro1/postnummer-sonekart.git"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "proj4": "^2.20.3",
+    "vite": "^7.3.1"
+  }
+}
