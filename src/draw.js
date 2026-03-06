@@ -1,7 +1,7 @@
-import { map, allPostnrs, setDrawMode } from "./map.js";
+import { map, allPostnrs, getDrawMode, setDrawMode } from "./map.js";
+import { DRAW_STYLE } from "./constants.js";
 import { getCentroid, pointInPolygon } from "./geo.js";
 
-let drawMode = null;
 let drawOrigin = null;
 let drawPreview = null;
 let lassoPoints = [];
@@ -18,7 +18,7 @@ export function initDraw(onSelect) {
   document.querySelectorAll(".draw-btn[data-tool]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      if (drawMode === btn.dataset.tool) exitDrawMode();
+      if (getDrawMode() === btn.dataset.tool) exitDrawMode();
       else enterDrawMode(btn.dataset.tool);
     });
   });
@@ -31,7 +31,6 @@ export function initDraw(onSelect) {
 
 function enterDrawMode(tool) {
   exitDrawMode();
-  drawMode = tool;
   setDrawMode(tool);
   mapEl.classList.add("draw-mode");
   map.dragging.disable();
@@ -46,7 +45,6 @@ function enterDrawMode(tool) {
 }
 
 function exitDrawMode() {
-  drawMode = null;
   setDrawMode(null);
   drawOrigin = null;
   lassoPoints = [];
@@ -63,10 +61,9 @@ function exitDrawMode() {
   map.off("mouseup", onMouseUp);
 }
 
-const DRAW_STYLE = { color: "#e74c3c", weight: 2, dashArray: "6 4", fillColor: "#e74c3c", fillOpacity: 0.12, interactive: false };
-
 function onMouseDown(e) {
-  if (drawMode === "lasso") {
+  const mode = getDrawMode();
+  if (mode === "lasso") {
     lassoDrawing = true;
     lassoPoints = [e.latlng];
     if (lassoPolyline) { map.removeLayer(lassoPolyline); lassoPolyline = null; }
@@ -77,7 +74,8 @@ function onMouseDown(e) {
 }
 
 function onMouseMove(e) {
-  if (drawMode === "lasso" && lassoDrawing) {
+  const mode = getDrawMode();
+  if (mode === "lasso" && lassoDrawing) {
     lassoPoints.push(e.latlng);
     if (lassoPolyline) map.removeLayer(lassoPolyline);
     lassoPolyline = L.polyline(lassoPoints, { color: "#e74c3c", weight: 2.5, interactive: false }).addTo(map);
@@ -85,15 +83,16 @@ function onMouseMove(e) {
   }
   if (!drawOrigin) return;
   if (drawPreview) map.removeLayer(drawPreview);
-  if (drawMode === "circle") {
+  if (mode === "circle") {
     drawPreview = L.circle(drawOrigin, { radius: drawOrigin.distanceTo(e.latlng), ...DRAW_STYLE }).addTo(map);
-  } else if (drawMode === "rect") {
+  } else if (mode === "rect") {
     drawPreview = L.rectangle([drawOrigin, e.latlng], DRAW_STYLE).addTo(map);
   }
 }
 
 function onMouseUp(e) {
-  if (drawMode === "lasso" && lassoDrawing) {
+  const mode = getDrawMode();
+  if (mode === "lasso" && lassoDrawing) {
     lassoDrawing = false;
     if (lassoPoints.length < 10) { lassoPoints = []; return; }
     lassoPoints.push(lassoPoints[0]);
@@ -105,11 +104,11 @@ function onMouseUp(e) {
     return;
   }
   if (!drawOrigin) return;
-  if (drawMode === "circle") {
+  if (mode === "circle") {
     const radius = drawOrigin.distanceTo(e.latlng);
     if (radius < 100) { drawOrigin = null; return; }
     selectInsideCircle(drawOrigin, radius);
-  } else if (drawMode === "rect") {
+  } else if (mode === "rect") {
     const bounds = L.latLngBounds(drawOrigin, e.latlng);
     if (bounds.getNorthEast().equals(bounds.getSouthWest())) { drawOrigin = null; return; }
     selectInsideRect(bounds);

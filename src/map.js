@@ -1,13 +1,5 @@
-import { activeTab, zones, routes, getManager, persist } from "./state.js";
-
-const POSTNR_KEYS = [
-  "postnummer", "POSTNUMMER", "postnr", "POSTNR",
-  "postNummer", "Postnummer", "postal_code", "postkode",
-];
-const POSTSTED_KEYS = [
-  "poststed", "POSTSTED", "postSted", "Poststed",
-  "poststedsnavn", "POSTSTEDSNAVN", "navn", "NAVN",
-];
+import { getManager } from "./state.js";
+import { DEFAULT_STYLE, POSTNR_KEYS, POSTSTED_KEYS, postnrMap } from "./constants.js";
 
 function findAttr(props, candidates) {
   for (const key of candidates) {
@@ -15,11 +7,6 @@ function findAttr(props, candidates) {
   }
   return null;
 }
-
-const DEFAULT_STYLE = {
-  color: "#3388ff", weight: 1, opacity: 0.6,
-  fillColor: "#3388ff", fillOpacity: 0.10,
-};
 
 export const featureIndex = {};   // postnr → Leaflet layer
 export const allPostnrs = [];     // [{postnr, poststed, layer}]
@@ -83,7 +70,9 @@ export function loadGeoJSON(url, onProgress) {
           const poststed = findAttr(props, POSTSTED_KEYS);
           if (!postnr) return;
           featureIndex[postnr] = layer;
-          allPostnrs.push({ postnr, poststed: poststed || "", layer });
+          const entry = { postnr, poststed: poststed || "", layer };
+          allPostnrs.push(entry);
+          postnrMap.set(postnr, entry);
           layer.on("click", () => {
             if (drawMode) return;
             if (onClickCallback) onClickCallback(postnr);

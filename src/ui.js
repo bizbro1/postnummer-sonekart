@@ -1,6 +1,12 @@
-import { allPostnrs, zoomToPostnr, applyStyle, featureIndex, repaintAll } from "./map.js";
+import { allPostnrs, zoomToPostnr, applyStyle, repaintAll } from "./map.js";
+import { postnrMap } from "./constants.js";
 import { zones, routes, activeTab, setActiveTab, persist, getManager } from "./state.js";
 import { exportJSON, exportCSV, importJSONFile } from "./export.js";
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
 
 export function initUI() {
   initTabs();
@@ -19,12 +25,7 @@ function initTabs() {
   document.querySelectorAll(".nav-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
       setActiveTab(btn.dataset.tab);
-      document.querySelectorAll(".nav-tab").forEach((b) =>
-        b.classList.toggle("active", b.dataset.tab === activeTab)
-      );
-      document.querySelectorAll(".tab-content").forEach((el) =>
-        el.classList.toggle("active", el.id === "tab-" + activeTab)
-      );
+      syncTabUI();
       repaintAll();
       refreshUI();
       persist();
@@ -92,7 +93,7 @@ function renderLists(containerId, mgr, emptyText) {
       for (const pnr of [...list].sort()) {
         const entry = document.createElement("div");
         entry.className = "zone-entry";
-        const info = allPostnrs.find((a) => a.postnr === pnr);
+        const info = postnrMap.get(pnr);
         const label = pnr + (info && info.poststed ? " – " + info.poststed : "");
         entry.innerHTML =
           '<span class="zone-entry-label">' + label + "</span>" +
@@ -116,8 +117,8 @@ function renderLists(containerId, mgr, emptyText) {
 function setupSearch(inputId, resultsId, mgr) {
   const input = document.getElementById(inputId);
   const results = document.getElementById(resultsId);
-  input.addEventListener("input", function () {
-    const q = this.value.trim().toLowerCase();
+  const doSearch = debounce(() => {
+    const q = input.value.trim().toLowerCase();
     results.innerHTML = "";
     if (q.length < 2) return;
     const matches = allPostnrs
@@ -132,7 +133,8 @@ function setupSearch(inputId, resultsId, mgr) {
       div.addEventListener("click", () => zoomToPostnr(m.postnr));
       results.appendChild(div);
     }
-  });
+  }, 180);
+  input.addEventListener("input", doSearch);
 }
 
 // ─── Soner ──────────────────────────────────────────────────────

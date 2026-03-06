@@ -1,43 +1,70 @@
 # Postnummer Sonekart
 
-Webapp for å velge og gruppere norske postnummerområder i soner på et interaktivt kart.
+Interaktivt kartverktøy for å gruppere norske postnummerområder i soner og ruter.
 
 ## Filstruktur
 
 ```
 Postnummer/
 ├── index.html                       # Hovedside med HTML-struktur
-├── styles.css                       # All styling (layout, panel, kart)
-├── app.js                           # All applikasjonslogikk
-├── serve.ps1                        # Lokal HTTP-server (PowerShell)
+├── vite.config.js                   # Vite-konfigurasjon
+├── package.json                     # Avhengigheter og scripts
+├── scripts/
+│   └── prepare-data.js              # Pre-prosesserer rå GeoJSON
+├── src/
+│   ├── main.js                      # Inngangspunkt – initialiserer alt
+│   ├── constants.js                 # Fargepaletter, stiler, delte konstanter
+│   ├── state.js                     # State-håndtering og localStorage
+│   ├── groups.js                    # GroupManager-klasse for soner/ruter
+│   ├── map.js                       # Leaflet-kart og GeoJSON-lasting
+│   ├── draw.js                      # Tegneverktøy (sirkel, rektangel, lasso)
+│   ├── radius.js                    # Radius-basert soneinndeling
+│   ├── ui.js                        # UI-rendering og event-håndtering
+│   ├── export.js                    # JSON/CSV eksport og import
+│   ├── geo.js                       # Geometri-beregninger (Haversine, PiP)
+│   └── styles.css                   # All styling
 ├── data/
-│   └── postnummeromrader.geojson    # GeoJSON med postnummerpolygoner
+│   ├── postnummeromrader.geojson            # Rå GeoJSON (ikke i git)
+│   ├── postnummeromrader-prepared.geojson   # Pre-prosessert (ikke i git)
+│   └── centroids.json                       # Senterpunkter (ikke i git)
 └── README.md
 ```
 
-## Kjøre applikasjonen
+## Kom i gang
 
-Appen laster GeoJSON via `fetch` og krever en HTTP-server (fungerer ikke via `file://`).
-
-### PowerShell (ingen avhengigheter)
-
-```powershell
-powershell -ExecutionPolicy Bypass -File serve.ps1
-```
-
-### Python
+### 1. Installer avhengigheter
 
 ```bash
-python -m http.server 8000
+npm install
 ```
 
-### Node.js
+### 2. Forbered GeoJSON-data
+
+Last ned **Postnummerområder** fra [Geonorge](https://kartkatalog.geonorge.no/metadata/postnummeromraader/462a5297-33ef-438a-82a5-07fff5c0f76b) i GeoJSON-format. Legg filen i `data/postnummeromrader.geojson`.
+
+Kjør deretter data-scriptet som reprojiserer, trimmer og optimaliserer filen:
 
 ```bash
-npx serve .
+npm run prepare-data
 ```
 
-Åpne deretter **http://localhost:8000** i nettleseren.
+Dette reduserer filen fra ~100 MB til ~20 MB og pre-beregner senterpunkter.
+
+### 3. Start utviklingsserver
+
+```bash
+npm run dev
+```
+
+Åpne **http://localhost:3000** i nettleseren.
+
+### 4. Bygg for produksjon (valgfritt)
+
+```bash
+npm run build
+```
+
+Ferdig bygget legges i `dist/`.
 
 ---
 
@@ -46,49 +73,53 @@ npx serve .
 ### Kartvisning
 
 - **Leaflet** med OpenStreetMap-baselayer
-- Alle norske postnummerområder vises som polygoner med tynn kantlinje og gjennomsiktig fyll
+- Alle norske postnummerområder vises som polygoner
 - Zoomer automatisk til Norge ved oppstart
-- Tooltip med postnummer og poststed vises ved hover over polygon
+- Tooltip med postnummer og poststed ved hover
 
-### Soneadministrasjon
+### Soneadministrasjon (Sonekart-fanen)
 
-- **Klikk polygon** for å toggle valgt/ikke valgt — tilhører aktiv sone
+- **Klikk polygon** for å toggle valgt/ikke valgt – tilhører aktiv sone
 - **Dropdown** for å velge aktiv sone (Sone 1, Sone 2, ...)
 - **+/−** knapper for å legge til eller fjerne soner
-- Hver sone har unik farge som vises på kartet og i panelet
+- Unik farge per sone
+
+### Ruteadministrasjon (Ruter-fanen)
+
+- Samme funksjonalitet som soner, men for ruter
+- Mulighet for å gi ruter egne navn
+- Separate eksport-filer
+
+### Tegneverktøy
+
+- **Sirkel** – tegn en sirkel for å velge alle postnumre inni
+- **Rektangel** – tegn et rektangel for bulk-valg
+- **Frihåndslasso** – hold museknappen nede og tegn fritt
 
 ### Radius-soneinndeling
 
-Automatisk soneinndeling basert på avstand fra et sentrum-postnummer:
+Automatisk inndeling basert på luftlinjeavstand fra et sentrum-postnummer:
 
-| Felt                       | Beskrivelse                                                    |
-|----------------------------|----------------------------------------------------------------|
-| **Sentrum postnr**         | Postnummeret som er sentrum (f.eks. `1414`)                    |
-| **Km per sone**            | Avstand per sone-ring i km (standard 10)                       |
-| **Antall soner**           | Hvor mange soner som opprettes (standard 5)                    |
-| **Samle resten i siste**   | Postnummer utenfor siste ring havner i siste sone              |
-
-Knappen **"Generer soner fra radius"** beregner luftlinjeavstand (Haversine) fra sentrum til hvert postnummerområdes senterpunkt og tildeler soner automatisk. Stiplede sirkler vises som forhåndsvisning på kartet.
+| Felt | Beskrivelse |
+|---|---|
+| **Sentrum postnr** | Postnummeret som er sentrum (f.eks. `1414`) |
+| **Km per sone** | Avstand per sone-ring i km (standard 10) |
+| **Antall soner** | Hvor mange soner som opprettes (standard 5) |
+| **Samle resten i siste** | Postnummer utenfor siste ring → siste sone |
 
 ### Søk
 
-Fritekstfilter på postnummer og poststed. Klikk et resultat for å zoome til området på kartet.
+Fritekst-søk på postnummer og poststed med debounce. Klikk et resultat for å zoome.
 
 ### Sonelister
 
-Viser alle postnummer per sone sortert, med poststedsnavn. Klikk postnummer for å zoome, klikk **×** for å fjerne fra sonen.
-
-### Statuslinje
-
-Viser totalt antall valgte postnummerområder samt antall per sone med fargekode.
+Viser alle postnummer per sone/rute sortert. Klikk for å zoome, **×** for å fjerne.
 
 ---
 
 ## Eksport og import
 
 ### Eksporter JSON
-
-Laster ned en JSON-fil med sonestruktur:
 
 ```json
 {
@@ -99,80 +130,49 @@ Laster ned en JSON-fil med sonestruktur:
 
 ### Eksporter CSV
 
-Laster ned en semikolon-separert CSV-fil med UTF-8 BOM (for korrekt æøå i Excel):
+Semikolon-separert med UTF-8 BOM (for korrekt æøå i Excel):
 
 ```
 Country;Postcode;Territory;City
 Norway;1;Sone 1;OSLO
-Norway;10;Sone 1;OSLO
 Norway;4098;Sone 3;TANANGER
 ```
 
 ### Importer JSON
 
-Last inn en tidligere eksportert JSON-fil for å gjenopprette soner.
+Last inn en tidligere eksportert JSON-fil for å gjenopprette soner/ruter.
 
 ### Automatisk lagring
 
-All tilstand (soner, valg, aktiv sone) lagres automatisk i `localStorage` ved hver endring og gjenopprettes ved neste besøk.
+All tilstand lagres i `localStorage` ved hver endring og gjenopprettes ved neste besøk.
 
 ---
 
 ## Datakilde
 
-### Postnummerområder fra Geonorge
-
-Datasettet **"Postnummerområder"** eies av Kartverket/Bring.
+Datasettet **Postnummerområder** eies av Kartverket/Bring.
 
 **Nedlasting:** https://kartkatalog.geonorge.no/metadata/postnummeromraader/462a5297-33ef-438a-82a5-07fff5c0f76b
 
-Velg GeoJSON-format ved nedlasting. Filen er typisk i EPSG:25833 (UTM sone 33N) — appen reprojiserer automatisk til WGS84 ved lasting via **proj4js**.
+Velg GeoJSON-format. Filen er i EPSG:25833 (UTM sone 33N) – `prepare-data.js` reprojiserer til WGS84.
 
-### Nestet GeoJSON-struktur
-
-Geonorge-filen wrapper FeatureCollection under nøkkelen `"postnummeromrader.postnummeromrade"`. Appen håndterer dette automatisk ved å søke etter FeatureCollection i toppnivå-nøklene.
-
-### Konvertering fra andre formater
-
-Hvis filen lastes ned i GML eller SOSI-format:
-
-```bash
-# GML -> GeoJSON
-ogr2ogr -f GeoJSON -t_srs EPSG:4326 postnummeromrader.geojson input.gml
-
-# SOSI -> GeoJSON (krever GDAL med FYBA-støtte)
-ogr2ogr -f GeoJSON -t_srs EPSG:4326 postnummeromrader.geojson input.sos
-```
-
-### Redusere filstørrelse
-
-Original fil kan være 50–100 MB. For raskere lasting:
-
-```bash
-ogr2ogr -f GeoJSON -t_srs EPSG:4326 -simplify 0.001 output.geojson input.geojson
-```
-
----
-
-## GeoJSON-attributter
+### GeoJSON-attributter
 
 Appen gjenkjenner disse feltnavnene automatisk:
 
-| Attributt    | Varianter som sjekkes                                                           |
-|--------------|---------------------------------------------------------------------------------|
-| Postnummer   | `postnummer`, `POSTNUMMER`, `postnr`, `POSTNR`, `postal_code`, `postkode`       |
-| Poststed     | `poststed`, `POSTSTED`, `poststedsnavn`, `POSTSTEDSNAVN`, `navn`, `NAVN`        |
-
-Hvis datasettet bruker andre feltnavn, legg dem til i `POSTNR_KEYS` og `POSTSTED_KEYS` i `app.js`.
+| Attributt | Varianter |
+|---|---|
+| Postnummer | `postnummer`, `POSTNUMMER`, `postnr`, `POSTNR`, `postal_code`, `postkode` |
+| Poststed | `poststed`, `POSTSTED`, `poststedsnavn`, `POSTSTEDSNAVN`, `navn`, `NAVN` |
 
 ---
 
 ## Teknologi
 
-| Komponent       | Versjon / Kilde                        |
-|-----------------|----------------------------------------|
-| Leaflet         | 1.9.4 (CDN)                           |
-| proj4js         | 2.9.2 (CDN)                           |
-| OpenStreetMap   | Tile layer                             |
-| Lagring         | localStorage                           |
-| Backend         | Ingen — ren statisk HTML/CSS/JS        |
+| Komponent | Versjon / Kilde |
+|---|---|
+| Vite | Build-verktøy og dev-server |
+| Leaflet | 1.9.4 (CDN) |
+| proj4js | Brukes i `prepare-data.js` (npm) |
+| OpenStreetMap | Tile layer |
+| Lagring | localStorage |

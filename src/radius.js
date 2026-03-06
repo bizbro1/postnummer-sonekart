@@ -1,12 +1,8 @@
 import { map, allPostnrs, featureIndex, repaintAll } from "./map.js";
+import { ZONE_COLORS } from "./constants.js";
 import { zones, persist } from "./state.js";
 import { haversineKm, getCentroid } from "./geo.js";
 import { refreshUI } from "./ui.js";
-
-const ZONE_COLORS = [
-  "#2980b9", "#27ae60", "#e67e22", "#8e44ad", "#c0392b",
-  "#16a085", "#d35400", "#2c3e50", "#f39c12", "#1abc9c",
-];
 
 let radiusCircles = [];
 
@@ -30,11 +26,9 @@ function applyRadius() {
   }
 
   const center = getCentroid(featureIndex[centerPnr]);
-
-  zones.clearAll();
-  zones.groups = {};
-  zones.lookup = {};
-  for (let i = 1; i <= numZones; i++) zones.groups["Sone " + i] = [];
+  const names = [];
+  for (let i = 1; i <= numZones; i++) names.push("Sone " + i);
+  zones.resetGroups(names);
 
   const counts = new Array(numZones).fill(0);
   let outsideCount = 0;

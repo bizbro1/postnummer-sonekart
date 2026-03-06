@@ -1,4 +1,4 @@
-import { allPostnrs } from "./map.js";
+import { postnrMap } from "./constants.js";
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -22,7 +22,7 @@ export function exportCSV(groupObj, filename) {
   for (const [name, list] of Object.entries(groupObj)) {
     const sorted = [...list].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
     for (const pnr of sorted) {
-      const info = allPostnrs.find((a) => a.postnr === pnr);
+      const info = postnrMap.get(pnr);
       const city = info && info.poststed ? info.poststed : "";
       csv += "Norway;" + parseInt(pnr, 10) + ";" + name + ";" + city + "\n";
     }
