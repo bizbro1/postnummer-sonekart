@@ -4,7 +4,7 @@ import { zones, routes, activeTab, loadFromStorage, persist, getManager } from "
 import { initUI, refreshUI, syncTabUI } from "./ui.js";
 import { initDraw } from "./draw.js";
 import { initRadius } from "./radius.js";
-import { initAddressUI } from "./addressUI.js";
+import { initOrderUI } from "./orderUI.js";
 
 const loadingOverlay = document.getElementById("loading-overlay");
 const loadingText = document.getElementById("loading-text");
@@ -38,7 +38,7 @@ initDraw((selectedList) => {
 
 initUI();
 initRadius();
-initAddressUI();
+initOrderUI();
 
 loadGeoJSON("./data/postnummeromrader-prepared.geojson", (msg) => {
   loadingText.textContent = msg;

@@ -144,43 +144,41 @@
     </div>
   </div>
 
-  <!-- ═══════════ ADDRESS PANEL (modal overlay) ═══════════ -->
-  <div id="address-panel" class="address-panel hidden">
-    <div class="address-panel-header">
-      <h3 id="address-panel-title">Adresser</h3>
-      <button id="address-panel-close" title="Lukk">&times;</button>
+  <!-- ═══════════ ORDER GENERATOR PANEL ═══════════ -->
+  <div id="order-panel" class="order-panel hidden">
+    <div class="order-panel-header">
+      <h3>Ordregenerator</h3>
+      <button id="order-panel-close" title="Lukk">&times;</button>
     </div>
 
-    <div class="address-panel-section">
-      <label for="address-search-input">Søk adresse i Norge:</label>
-      <input type="text" id="address-search-input" class="search-input" placeholder="f.eks. Storgata 15, Oslo" />
-      <div id="address-search-results" class="search-results"></div>
+    <div class="order-panel-section">
+      <label>Velg soner:</label>
+      <div id="order-gen-groups" class="order-checkbox-list"></div>
     </div>
 
-    <div class="address-panel-section">
-      <div class="address-gen-row">
-        <label>Generer tilfeldige adresser:</label>
-        <div class="address-gen-controls">
-          <select id="address-gen-group"></select>
-          <input type="number" id="address-gen-count" value="1" min="1" max="10" title="Antall per postnr" />
-          <button id="btn-gen-addresses">Generer</button>
-        </div>
-      </div>
-      <div id="address-gen-status" class="address-gen-status"></div>
+    <div class="order-panel-section">
+      <label>Antall ordre:</label>
+      <input type="number" id="order-gen-count" value="5" min="1" max="200" />
     </div>
 
-    <div class="address-panel-section">
-      <div id="address-results" class="address-results"></div>
+    <div class="order-panel-section">
+      <button id="btn-gen-orders" class="btn-generate">Generer ordre</button>
+      <div id="order-gen-status" class="order-gen-status"></div>
     </div>
 
-    <div class="address-panel-actions">
-      <button id="btn-copy-addresses" title="Kopier til utklippstavle">Kopier</button>
-      <button id="btn-export-addresses-csv" title="Last ned CSV">Last ned CSV</button>
-      <button id="btn-show-on-map" title="Vis på kart">Vis på kart</button>
+    <div class="order-panel-section order-results-section">
+      <div id="order-results" class="order-results"></div>
+    </div>
+
+    <div class="order-panel-actions">
+      <button id="btn-copy-orders">Kopier</button>
+      <button id="btn-export-orders-csv">Last ned CSV</button>
+      <button id="btn-export-orders-json">Last ned JSON</button>
+      <button id="btn-show-orders-map">Vis på kart</button>
     </div>
   </div>
 
-  <button id="btn-open-addresses" class="floating-btn" title="Adresser">&#127968;</button>
+  <button id="btn-open-orders" class="floating-btn" title="Ordregenerator">&#128230;</button>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/src/main.js"></script>

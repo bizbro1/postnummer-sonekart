@@ -1,7 +1,7 @@
 const BASE_URL = "https://ws.geonorge.no/adresser/v1";
 const cache = new Map();
 
-export async function fetchAddresses(postnummer, limit = 1000) {
+export async function fetchAddresses(postnummer, limit = 50) {
   if (cache.has(postnummer)) return cache.get(postnummer);
 
   const url = `${BASE_URL}/sok?postnummer=${postnummer}&treffPerSide=${limit}`;
@@ -37,22 +37,35 @@ export async function randomAddress(postnummer) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-export async function randomAddressesForGroup(postnumre, countPerPostnr = 1) {
-  const results = [];
-  const shuffled = [...postnumre].sort(() => Math.random() - 0.5);
+/**
+ * @param {string[]} postnumre - postal codes in the group
+ * @param {number} totalCount - total number of addresses wanted
+ * @param {function} onProgress - callback(done, total)
+ */
+export async function randomAddressesForGroup(postnumre, totalCount = 5, onProgress) {
+  const sampleSize = Math.min(postnumre.length, totalCount);
+  const shuffled = [...postnumre].sort(() => Math.random() - 0.5).slice(0, sampleSize);
 
-  for (const pnr of shuffled) {
+  const CONCURRENCY = 6;
+  const results = [];
+  let done = 0;
+
+  async function fetchOne(pnr) {
     try {
       const list = await fetchAddresses(pnr);
-      if (list.length === 0) continue;
-      const picked = new Set();
-      const n = Math.min(countPerPostnr, list.length);
-      while (picked.size < n) {
-        picked.add(list[Math.floor(Math.random() * list.length)]);
+      if (list.length > 0) {
+        results.push(list[Math.floor(Math.random() * list.length)]);
       }
-      results.push(...picked);
     } catch (_) {}
+    done++;
+    if (onProgress) onProgress(done, shuffled.length);
   }
+
+  for (let i = 0; i < shuffled.length; i += CONCURRENCY) {
+    const batch = shuffled.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map(fetchOne));
+  }
+
   return results;
 }
 
