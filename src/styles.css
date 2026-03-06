@@ -752,6 +752,14 @@ html, body {
   color: #333;
 }
 
+.order-link {
+  cursor: pointer;
+}
+
+.order-row:hover .order-link {
+  color: #2980b9;
+}
+
 .order-panel-actions {
   display: flex;
   gap: 6px;

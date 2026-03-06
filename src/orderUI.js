@@ -26,6 +26,8 @@ const csvBtn = document.getElementById("btn-export-orders-csv");
 const jsonBtn = document.getElementById("btn-export-orders-json");
 const mapBtn = document.getElementById("btn-show-orders-map");
 
+let markersVisible = false;
+
 export function initOrderUI() {
   openBtn.addEventListener("click", () => {
     panel.classList.toggle("hidden");
@@ -36,7 +38,7 @@ export function initOrderUI() {
   copyBtn.addEventListener("click", copyToClipboard);
   csvBtn.addEventListener("click", downloadCSV);
   jsonBtn.addEventListener("click", downloadJSON);
-  mapBtn.addEventListener("click", showOnMap);
+  mapBtn.addEventListener("click", toggleMapMarkers);
 }
 
 function getManager() {
@@ -109,25 +111,34 @@ async function generateOrders() {
   resultsList.innerHTML = "";
   genStatus.textContent = "Genererer ordre...";
 
-  for (let i = 0; i < totalCount; i++) {
-    genStatus.textContent = "Genererer ordre " + (i + 1) + "/" + totalCount + "...";
+  let created = 0;
+  let attempts = 0;
+  const maxAttempts = totalCount * 5;
+
+  while (created < totalCount && attempts < maxAttempts) {
+    attempts++;
+    genStatus.textContent = "Genererer ordre " + (created + 1) + "/" + totalCount + "...";
 
     const hentePnr = pickRandom(allPostnumre);
     const leverPnr = pickRandom(allPostnumre);
 
-    const [henteAddr, leverAddr] = await Promise.all([
-      randomAddress(hentePnr),
-      randomAddress(leverPnr),
-    ]);
+    let henteAddr, leverAddr;
+    try {
+      [henteAddr, leverAddr] = await Promise.all([
+        randomAddress(hentePnr),
+        randomAddress(leverPnr),
+      ]);
+    } catch (_) { continue; }
 
     if (!henteAddr || !leverAddr) continue;
 
     const henteSone = selected.find((g) => g.postnumre.includes(hentePnr))?.name || "";
     const leverSone = selected.find((g) => g.postnumre.includes(leverPnr))?.name || "";
 
+    created++;
     const kolli = randomKolli();
     const order = {
-      ordreNr: "ORD-" + String(Date.now()).slice(-6) + "-" + String(i + 1).padStart(3, "0"),
+      ordreNr: "ORD-" + String(Date.now()).slice(-6) + "-" + String(created).padStart(3, "0"),
       hentested: henteAddr,
       henteSone,
       leveringsted: leverAddr,
@@ -152,17 +163,34 @@ function appendOrderRow(order) {
       '<span class="order-kolli">' + order.kolli.antall + 'x ' + order.kolli.type + '</span>' +
     '</div>' +
     '<div class="order-row">' +
-      '<span class="order-label">Hente:</span>' +
-      '<span class="order-addr">' + esc(order.hentested.text) + ', ' + order.hentested.postnummer + ' ' + order.hentested.poststed +
+      '<span class="order-label order-link" data-type="hente">Hente:</span>' +
+      '<span class="order-addr order-link" data-type="hente">' + esc(order.hentested.text) + ', ' + order.hentested.postnummer + ' ' + order.hentested.poststed +
       (order.henteSone ? ' <span class="order-sone-tag">' + esc(order.henteSone) + '</span>' : '') + '</span>' +
     '</div>' +
     '<div class="order-row">' +
-      '<span class="order-label">Lever:</span>' +
-      '<span class="order-addr">' + esc(order.leveringsted.text) + ', ' + order.leveringsted.postnummer + ' ' + order.leveringsted.poststed +
+      '<span class="order-label order-link" data-type="lever">Lever:</span>' +
+      '<span class="order-addr order-link" data-type="lever">' + esc(order.leveringsted.text) + ', ' + order.leveringsted.postnummer + ' ' + order.leveringsted.poststed +
       (order.leverSone ? ' <span class="order-sone-tag">' + esc(order.leverSone) + '</span>' : '') + '</span>' +
     '</div>';
+
+  div.querySelectorAll('[data-type="hente"]').forEach((el) => {
+    el.addEventListener("click", () => zoomToAddress(order.hentested, "Hente – " + order.ordreNr));
+  });
+  div.querySelectorAll('[data-type="lever"]').forEach((el) => {
+    el.addEventListener("click", () => zoomToAddress(order.leveringsted, "Lever – " + order.ordreNr));
+  });
+
   resultsList.appendChild(div);
   resultsList.scrollTop = resultsList.scrollHeight;
+}
+
+function zoomToAddress(addr, label) {
+  if (!addr.lat || !addr.lng) return;
+  map.setView([addr.lat, addr.lng], 16);
+  L.popup()
+    .setLatLng([addr.lat, addr.lng])
+    .setContent("<b>" + esc(label) + "</b><br>" + esc(addr.text) + "<br>" + addr.postnummer + " " + addr.poststed)
+    .openOn(map);
 }
 
 function esc(s) {
@@ -236,6 +264,14 @@ function downloadBlob(content, filename, type) {
   URL.revokeObjectURL(url);
 }
 
+function toggleMapMarkers() {
+  if (markersVisible) {
+    clearMapMarkers();
+  } else {
+    showOnMap();
+  }
+}
+
 function showOnMap() {
   clearMapMarkers();
   if (currentOrders.length === 0) return;
@@ -260,15 +296,13 @@ function showOnMap() {
   if (orderMarkers.length > 0) {
     map.fitBounds(L.featureGroup(orderMarkers).getBounds(), { padding: [40, 40], maxZoom: 14 });
   }
+  markersVisible = true;
   mapBtn.textContent = "Fjern markører";
-  mapBtn.onclick = () => {
-    clearMapMarkers();
-    mapBtn.textContent = "Vis på kart";
-    mapBtn.onclick = showOnMap;
-  };
 }
 
 function clearMapMarkers() {
   for (const m of orderMarkers) map.removeLayer(m);
   orderMarkers = [];
+  markersVisible = false;
+  mapBtn.textContent = "Vis på kart";
 }
