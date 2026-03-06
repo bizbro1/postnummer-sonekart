@@ -144,6 +144,44 @@
     </div>
   </div>
 
+  <!-- ═══════════ ADDRESS PANEL (modal overlay) ═══════════ -->
+  <div id="address-panel" class="address-panel hidden">
+    <div class="address-panel-header">
+      <h3 id="address-panel-title">Adresser</h3>
+      <button id="address-panel-close" title="Lukk">&times;</button>
+    </div>
+
+    <div class="address-panel-section">
+      <label for="address-search-input">Søk adresse i Norge:</label>
+      <input type="text" id="address-search-input" class="search-input" placeholder="f.eks. Storgata 15, Oslo" />
+      <div id="address-search-results" class="search-results"></div>
+    </div>
+
+    <div class="address-panel-section">
+      <div class="address-gen-row">
+        <label>Generer tilfeldige adresser:</label>
+        <div class="address-gen-controls">
+          <select id="address-gen-group"></select>
+          <input type="number" id="address-gen-count" value="1" min="1" max="10" title="Antall per postnr" />
+          <button id="btn-gen-addresses">Generer</button>
+        </div>
+      </div>
+      <div id="address-gen-status" class="address-gen-status"></div>
+    </div>
+
+    <div class="address-panel-section">
+      <div id="address-results" class="address-results"></div>
+    </div>
+
+    <div class="address-panel-actions">
+      <button id="btn-copy-addresses" title="Kopier til utklippstavle">Kopier</button>
+      <button id="btn-export-addresses-csv" title="Last ned CSV">Last ned CSV</button>
+      <button id="btn-show-on-map" title="Vis på kart">Vis på kart</button>
+    </div>
+  </div>
+
+  <button id="btn-open-addresses" class="floating-btn" title="Adresser">&#127968;</button>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/src/main.js"></script>
 </body>
