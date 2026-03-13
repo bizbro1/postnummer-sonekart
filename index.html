@@ -29,6 +29,7 @@
       <div id="nav-tabs">
         <button class="nav-tab active" data-tab="soner">Sonekart</button>
         <button class="nav-tab" data-tab="ruter">Ruter</button>
+        <a href="/orders.html" class="nav-tab">Ordregenerator</a>
       </div>
 
       <!-- ═══════════ SONER TAB ═══════════ -->
@@ -143,42 +144,6 @@
 
     </div>
   </div>
-
-  <!-- ═══════════ ORDER GENERATOR PANEL ═══════════ -->
-  <div id="order-panel" class="order-panel hidden">
-    <div class="order-panel-header">
-      <h3>Ordregenerator</h3>
-      <button id="order-panel-close" title="Lukk">&times;</button>
-    </div>
-
-    <div class="order-panel-section">
-      <label>Velg soner:</label>
-      <div id="order-gen-groups" class="order-checkbox-list"></div>
-    </div>
-
-    <div class="order-panel-section">
-      <label>Antall ordre:</label>
-      <input type="number" id="order-gen-count" value="5" min="1" max="200" />
-    </div>
-
-    <div class="order-panel-section">
-      <button id="btn-gen-orders" class="btn-generate">Generer ordre</button>
-      <div id="order-gen-status" class="order-gen-status"></div>
-    </div>
-
-    <div class="order-panel-section order-results-section">
-      <div id="order-results" class="order-results"></div>
-    </div>
-
-    <div class="order-panel-actions">
-      <button id="btn-copy-orders">Kopier</button>
-      <button id="btn-export-orders-csv">Last ned CSV</button>
-      <button id="btn-export-orders-json">Last ned JSON</button>
-      <button id="btn-show-orders-map">Vis på kart</button>
-    </div>
-  </div>
-
-  <button id="btn-open-orders" class="floating-btn" title="Ordregenerator">&#128230;</button>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/src/main.js"></script>
